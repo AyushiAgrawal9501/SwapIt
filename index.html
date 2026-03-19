@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwapIt — Same Vibe, Half the Footprint</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:#F5F0E8; --forest:#1C3829; --moss:#4A6741;
+  --sage:#8FAF7E;  --bark:#8B6F47;   --leaf:#C5D9B0;
+  --sand:#E8DCC8;  --ink:#1A1A1A;    --white:#FDFAF5;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--ink);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 10% 20%,rgba(143,175,126,.15) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 80% at 90% 80%,rgba(28,56,41,.08) 0%,transparent 60%);}
+.container{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:28px 20px 80px;}
+
+/* ── ONBOARDING MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--white);border-radius:28px;padding:36px 32px;max-width:460px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.25);text-align:center;}
+.modal-icon{font-size:48px;margin-bottom:16px;}
+.modal-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--forest);margin-bottom:8px;}
+.modal-sub{font-size:14px;color:var(--bark);line-height:1.7;margin-bottom:24px;}
+.goal-options{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.goal-opt{padding:14px 8px;border-radius:16px;border:2px solid var(--sand);background:var(--cream);cursor:pointer;transition:all .2s;font-family:'Playfair Display',serif;font-size:20px;color:var(--forest);}
+.goal-opt:hover{border-color:var(--sage);}
+.goal-opt.selected{border-color:var(--moss);background:var(--leaf);}
+.goal-opt span{display:block;font-family:'DM Mono',monospace;font-size:9px;color:var(--bark);letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+.modal-confirm{width:100%;background:var(--forest);color:var(--leaf);border:none;padding:15px;border-radius:100px;font-family:'Playfair Display',serif;font-size:17px;font-style:italic;cursor:pointer;transition:all .25s;}
+.modal-confirm:hover{background:var(--moss);}
+.modal-skip{margin-top:12px;display:block;font-family:'DM Mono',monospace;font-size:11px;color:var(--bark);cursor:pointer;letter-spacing:.06em;text-decoration:underline;}
+
+/* ── STATS BAR ── */
+.stats-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--forest);border-radius:18px;padding:14px 18px;margin-bottom:10px;}
+.stat-item{display:flex;align-items:center;gap:8px;flex:1;min-width:80px;}
+.stat-icon{font-size:17px;}
+.stat-info{display:flex;flex-direction:column;}
+.stat-value{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--leaf);line-height:1;}
+.stat-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);}
+.stat-div{width:1px;height:28px;background:rgba(143,175,126,.25);}
+.level-pill{margin-left:auto;background:var(--moss);color:var(--leaf);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.07em;padding:6px 14px;border-radius:100px;text-transform:uppercase;white-space:nowrap;}
+
+/* ── GOAL PROGRESS BAR ── */
+.goal-bar-wrap{background:var(--forest);border-radius:0 0 14px 14px;padding:10px 18px 14px;margin-bottom:16px;margin-top:-4px;}
+.goal-bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.goal-bar-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sage);}
+.goal-bar-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--leaf);}
+.goal-bar-track{background:rgba(255,255,255,.1);border-radius:100px;height:6px;overflow:hidden;}
+.goal-bar-fill{height:100%;background:linear-gradient(90deg,var(--sage),var(--leaf));border-radius:100px;transition:width .6s ease;}
+
+/* ── SOCIAL PROOF TICKER ── */
+.proof-ticker{background:var(--leaf);border-radius:14px;padding:11px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.proof-dot{width:8px;height:8px;background:var(--moss);border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
+.proof-text{font-family:'DM Mono',monospace;font-size:11px;color:var(--forest);letter-spacing:.04em;flex:1;}
+.proof-text strong{color:var(--moss);}
+.proof-count{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--forest);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* ── BADGES ── */
+.badges-shelf{background:var(--white);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.badges-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--bark);}
+.badge-chip{font-size:22px;cursor:default;position:relative;transition:transform .2s;}
+.badge-chip:hover{transform:scale(1.2);}
+.badge-chip.locked{filter:grayscale(1) opacity(.25);}
+.badge-chip[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:var(--forest);color:var(--leaf);font-family:'DM Sans',sans-serif;font-size:11px;white-space:nowrap;padding:4px 10px;border-radius:8px;pointer-events:none;z-index:99;}
+
+/* ── HEADER ── */
+header{text-align:center;margin-bottom:28px;}
+.logo-mark{display:inline-flex;align-items:center;gap:8px;background:var(--forest);color:var(--leaf);padding:6px 16px 6px 10px;border-radius:100px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;}
+.logo-dot{width:8px;height:8px;background:var(--sage);border-radius:50%;animation:pulse 2s ease-in-out infinite;}
+h1{font-family:'Playfair Display',serif;font-size:clamp(32px,7vw,56px);font-weight:700;color:var(--forest);line-height:1;letter-spacing:-.02em;margin-bottom:8px;}
+h1 em{font-style:italic;color:var(--moss);}
+.tagline{font-family:'DM Mono',monospace;font-size:12px;color:var(--bark);letter-spacing:.06em;text-transform:uppercase;}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{border:2px dashed var(--sage);border-radius:24px;background:var(--white);padding:40px 28px;text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+.upload-zone.dragover{border-color:var(--moss);background:rgba(143,175,126,.05);transform:translateY(-2px);box-shadow:0 12px 40px rgba(28,56,41,.1);}
+.upload-icon{width:56px;height:56px;margin:0 auto 14px;background:var(--leaf);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;transition:transform .3s;}
+.upload-zone.dragover .upload-icon{transform:scale(1.1) rotate(-5deg);}
+.upload-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--forest);margin-bottom:6px;}
+.upload-sub{font-size:13px;color:var(--bark);line-height:1.6;margin-bottom:18px;}
+.upload-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.upload-btn{background:var(--forest);color:var(--leaf);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:11px 20px;border-radius:100px;border:none;cursor:pointer;transition:all .25s;display:inline-flex;align-items:center;gap:7px;}
+.upload-btn:hover{background:var(--moss);transform:translateY(-1px);}
+.upload-btn.secondary{background:transparent;color:var(--forest);border:1.5px solid var(--sage);}
+.upload-btn.secondary:hover{background:var(--forest);color:var(--leaf);border-color:var(--forest);}
+#fileInput{display:none;}
+
+/* ── CAMERA MODAL ── */
+.cam-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
+.cam-box{background:var(--forest);border-radius:24px;overflow:hidden;width:100%;max-width:480px;box-shadow:0 24px 60px rgba(0,0,0,.5);}
+.cam-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(143,175,126,.2);}
+.cam-head-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--leaf);}
+.cam-x{background:none;border:none;color:var(--sage);font-size:22px;cursor:pointer;line-height:1;padding:0 2px;}
+.cam-x:hover{color:var(--leaf);}
+.cam-foot{padding:16px;display:flex;gap:10px;justify-content:center;}
+.cam-snap{background:var(--leaf);color:var(--forest);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:12px 26px;border-radius:100px;border:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:7px;transition:all .25s;}
+.cam-snap:hover{background:var(--sage);transform:scale(1.04);}
+.cam-cancel-btn{background:transparent;color:var(--sage);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:12px 18px;border-radius:100px;border:1px solid rgba(143,175,126,.3);cursor:pointer;transition:all .25s;}
+.cam-cancel-btn:hover{color:var(--leaf);border-color:var(--sage);}
+.cam-err{padding:28px 20px;text-align:center;color:var(--sage);font-size:14px;line-height:1.7;}
+#camCanvas{display:none;}
+
+/* ── CONFETTI ── */
+#confettiCanvas{position:fixed;inset:0;pointer-events:none;z-index:600;}
+
+/* ── SWAP MEMORY CHIP ── */
+.memory-chip{background:var(--white);border:1.5px solid var(--sage);border-radius:16px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.memory-icon{font-size:22px;flex-shrink:0;}
+.memory-info{flex:1;}
+.memory-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:3px;}
+.memory-text{font-family:'Playfair Display',serif;font-size:15px;color:var(--forest);}
+.memory-link{background:var(--forest);color:var(--leaf);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;padding:7px 14px;border-radius:100px;text-decoration:none;white-space:nowrap;transition:all .2s;flex-shrink:0;}
+.memory-link:hover{background:var(--moss);}
+
+/* ── PREVIEW ── */
+.preview-card{background:var(--white);border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(28,56,41,.08);margin-bottom:14px;}
+.preview-img-wrap{position:relative;height:240px;overflow:hidden;background:var(--sand);}
+.preview-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.preview-label{position:absolute;top:14px;left:14px;background:rgba(28,56,41,.85);backdrop-filter:blur(8px);color:var(--leaf);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border-radius:100px;pointer-events:none;}
+.remove-img-btn{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.95);border:none;cursor:pointer;z-index:50;display:flex;align-items:center;justify-content:center;font-size:14px;color:#C0392B;box-shadow:0 2px 10px rgba(0,0,0,.2);transition:all .2s;}
+.remove-img-btn:hover{background:#FDECEA;transform:scale(1.1);}
+.analyze-btn{width:100%;background:var(--forest);color:var(--leaf);border:none;padding:17px;font-family:'Playfair Display',serif;font-size:17px;font-style:italic;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.analyze-btn:hover{background:var(--moss);}
+.analyze-btn:disabled{opacity:.6;cursor:not-allowed;}
+.error-card{display:none;background:#FDECEA;border-radius:14px;padding:14px 18px;color:#C0392B;font-size:13px;margin-top:12px;border:1px solid #F5B7B1;}
+
+/* ── LOADING ── */
+.loading-state{text-align:center;padding:48px 28px;background:var(--white);border-radius:24px;}
+.spinner-wrap{position:relative;width:64px;height:64px;margin:0 auto 20px;}
+.spinner{width:64px;height:64px;border:3px solid var(--leaf);border-top-color:var(--forest);border-radius:50%;animation:spin 1s linear infinite;}
+.spinner-leaf{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Playfair Display',serif;font-size:19px;color:var(--forest);margin-bottom:6px;}
+.loading-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--bark);letter-spacing:.05em;}
+
+/* ── IMPACT CARD ── */
+.impact-card{background:var(--white);border-radius:22px;padding:24px;margin-bottom:14px;box-shadow:0 4px 24px rgba(28,56,41,.08);display:flex;gap:18px;align-items:flex-start;}
+.impact-score-wrap{flex-shrink:0;text-align:center;}
+.impact-score{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:26px;font-weight:700;}
+.impact-score.high{background:#FDECEA;color:#C0392B;}
+.impact-score.medium{background:#FEF3CD;color:#9B6F00;}
+.impact-score.low{background:var(--leaf);color:var(--forest);}
+.impact-score-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-top:6px;color:var(--bark);}
+.impact-info{flex:1;}
+.item-name{font-family:'Playfair Display',serif;font-size:22px;color:var(--forest);margin-bottom:8px;}
+.impact-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.tag-pill{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.05em;padding:3px 11px;border-radius:100px;text-transform:uppercase;}
+.tag-pill.red{background:#FDECEA;color:#C0392B;}
+.tag-pill.yellow{background:#FEF3CD;color:#9B6F00;}
+.tag-pill.green{background:var(--leaf);color:var(--forest);}
+.impact-why{font-size:13px;color:#555;line-height:1.7;}
+.points-flash{display:inline-flex;align-items:center;gap:6px;background:var(--forest);color:var(--leaf);font-family:'DM Mono',monospace;font-size:11px;padding:5px 14px;border-radius:100px;margin-top:10px;animation:popIn .4s ease both;}
+@keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* ── SCALE CARD ── */
+.scale-card{background:var(--forest);border-radius:18px;padding:18px 20px;margin-bottom:14px;display:flex;gap:14px;align-items:center;}
+.scale-globe{font-size:32px;flex-shrink:0;}
+.scale-info{}
+.scale-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--sage);margin-bottom:4px;}
+.scale-text{font-family:'Playfair Display',serif;font-size:15px;color:var(--leaf);line-height:1.5;}
+.scale-text strong{color:var(--leaf);}
+
+/* ── SWAP DIVIDER ── */
+.swap-divider{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(--moss);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;}
+.swap-divider::before,.swap-divider::after{content:'';flex:1;height:1px;background:var(--sage);opacity:.4;}
+
+/* ── SWAP CARD ── */
+.swap-card{background:var(--white);border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 4px 20px rgba(28,56,41,.06);border:1.5px solid transparent;transition:all .3s;position:relative;overflow:hidden;}
+.swap-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--moss),var(--sage));}
+.swap-card:hover{border-color:var(--sage);transform:translateY(-2px);box-shadow:0 10px 30px rgba(28,56,41,.12);}
+.swap-rank{position:absolute;top:16px;right:16px;background:var(--forest);color:var(--leaf);font-family:'DM Mono',monospace;font-size:10px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.swap-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--forest);margin-bottom:2px;padding-right:32px;}
+.swap-type{font-family:'DM Mono',monospace;font-size:10px;color:var(--bark);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+.swap-why{font-size:13px;color:#444;line-height:1.75;margin-bottom:12px;}
+.swap-benefits{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.benefit-pill{display:flex;align-items:center;gap:4px;background:var(--leaf);color:var(--forest);font-family:'DM Mono',monospace;font-size:10px;padding:4px 11px;border-radius:100px;}
+.price-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.price-original{font-family:'DM Mono',monospace;font-size:11px;color:#C0392B;text-decoration:line-through;}
+.price-arrow{color:var(--sage);}
+.price-swap{font-family:'DM Mono',monospace;font-size:12px;color:var(--forest);font-weight:600;}
+.price-delta{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:100px;}
+.price-delta.cheaper{background:var(--leaf);color:var(--forest);}
+.price-delta.similar{background:var(--sand);color:var(--bark);}
+.price-delta.pricier{background:#FEF3CD;color:#9B6F00;}
+.find-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--sand);}
+.find-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:7px;}
+.find-links{display:flex;flex-wrap:wrap;gap:7px;}
+.find-link{background:var(--forest);color:var(--leaf);font-size:11px;padding:5px 12px;border-radius:100px;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:4px;}
+.find-link:hover{background:var(--moss);transform:translateY(-1px);}
+.google-btn{background:#4285F4;color:#fff;font-family:'DM Mono',monospace;font-size:11px;padding:6px 14px;border-radius:100px;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px;}
+.google-btn:hover{background:#3367D6;transform:translateY(-1px);}
+
+/* ── DECISION ── */
+.decision-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--sand);}
+.decision-label{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--bark);margin-bottom:9px;}
+.decision-btns{display:flex;gap:7px;flex-wrap:wrap;}
+.dec-btn{flex:1;min-width:75px;padding:8px 10px;border-radius:12px;border:1.5px solid transparent;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.dec-btn.yes{background:var(--leaf);color:var(--forest);border-color:var(--sage);}
+.dec-btn.yes:hover,.dec-btn.yes.active{background:var(--moss);color:#fff;border-color:var(--moss);}
+.dec-btn.maybe{background:#FEF3CD;color:#9B6F00;border-color:#F9CA24;}
+.dec-btn.maybe:hover,.dec-btn.maybe.active{background:#F9CA24;color:var(--forest);border-color:#F9CA24;}
+.dec-btn.no{background:#FDECEA;color:#C0392B;border-color:#F5B7B1;}
+.dec-btn.no:hover,.dec-btn.no.active{background:#E74C3C;color:#fff;border-color:#E74C3C;}
+.dec-btn:disabled{opacity:.5;cursor:default;}
+.dec-feedback{margin-top:9px;font-family:'DM Mono',monospace;font-size:11px;color:var(--moss);letter-spacing:.03em;min-height:16px;}
+
+/* ── SHARE CARD TRIGGER ── */
+.share-trigger{display:none;margin-top:10px;width:100%;background:transparent;border:1.5px solid var(--sage);color:var(--forest);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:10px;border-radius:100px;cursor:pointer;transition:all .25s;align-items:center;justify-content:center;gap:7px;}
+.share-trigger.visible{display:flex;}
+.share-trigger:hover{background:var(--forest);color:var(--leaf);border-color:var(--forest);}
+
+/* ── SHARE MODAL ── */
+.share-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:450;display:flex;align-items:center;justify-content:center;padding:20px;}
+.share-inner{background:var(--white);border-radius:24px;overflow:hidden;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,.3);}
+.share-preview{background:var(--forest);padding:28px 24px 24px;text-align:center;}
+#shareCardCanvas{border-radius:16px;max-width:100%;}
+.share-actions{padding:20px;display:flex;gap:10px;flex-direction:column;}
+.share-dl-btn{background:var(--forest);color:var(--leaf);border:none;padding:14px;border-radius:100px;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.share-dl-btn:hover{background:var(--moss);}
+.share-close{background:transparent;border:1.5px solid var(--sand);color:var(--bark);padding:12px;border-radius:100px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .25s;}
+.share-close:hover{border-color:var(--bark);}
+
+/* ── ACTION BAR ── */
+.action-bar{display:flex;gap:12px;margin-top:20px;}
+.btn-reset{flex:1;padding:13px;border:1.5px solid var(--sage);background:transparent;color:var(--forest);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-radius:100px;cursor:pointer;transition:all .25s;}
+.btn-reset:hover{background:var(--forest);color:var(--leaf);border-color:var(--forest);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--forest);color:var(--leaf);font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 22px;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.2);z-index:999;transition:transform .4s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+.footer-note{text-align:center;margin-top:40px;font-family:'DM Mono',monospace;font-size:10px;color:var(--bark);letter-spacing:.05em;opacity:.6;}
+@media(max-width:500px){.impact-card{flex-direction:column;}.stat-div{display:none;}.goal-options{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- CONFETTI -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ONBOARDING MODAL -->
+<div class="modal-overlay" id="onboardingModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-icon">🌱</div>
+    <h2 class="modal-title">Set your swap goal</h2>
+    <p class="modal-sub">Pick a monthly target. We'll track your progress and cheer you on every step of the way.</p>
+    <div class="goal-options" id="goalOptions">
+      <div class="goal-opt" data-val="3">3<span>swaps</span></div>
+      <div class="goal-opt selected" data-val="5">5<span>swaps</span></div>
+      <div class="goal-opt" data-val="10">10<span>swaps</span></div>
+      <div class="goal-opt" data-val="20">20<span>swaps</span></div>
+    </div>
+    <button class="modal-confirm" id="goalConfirm">Let's do this 🌿</button>
+    <span class="modal-skip" id="goalSkip">Skip for now</span>
+  </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="cam-overlay" id="camOverlay" style="display:none">
+  <div class="cam-box">
+    <div class="cam-head">
+      <span class="cam-head-title">📷 Take a Photo</span>
+      <button class="cam-x" id="camClose">✕</button>
+    </div>
+    <div id="camBody"></div>
+    <canvas id="camCanvas"></canvas>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="share-modal" id="shareModal" style="display:none">
+  <div class="share-inner">
+    <div class="share-preview">
+      <canvas id="shareCardCanvas" width="320" height="480"></canvas>
+    </div>
+    <div class="share-actions">
+      <button class="share-dl-btn" id="shareDownload">⬇ Download Share Card</button>
+      <button class="share-close" id="shareClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-icon">⚡</span><div class="stat-info"><span class="stat-value" id="sPoints">0</span><span class="stat-label">Points</span></div></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-icon">🔍</span><div class="stat-info"><span class="stat-value" id="sScans">0</span><span class="stat-label">Scans</span></div></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-icon">🌍</span><div class="stat-info"><span class="stat-value" id="sCo2">0kg</span><span class="stat-label">CO₂ Saved</span></div></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><span class="stat-icon">✅</span><div class="stat-info"><span class="stat-value" id="sSwaps">0</span><span class="stat-label">Swaps</span></div></div>
+    <span class="level-pill" id="levelPill">🌱 Sprout</span>
+  </div>
+
+  <!-- GOAL PROGRESS BAR -->
+  <div class="goal-bar-wrap" id="goalBarWrap" style="display:none">
+    <div class="goal-bar-top">
+      <span class="goal-bar-label">Monthly Swap Goal</span>
+      <span class="goal-bar-count" id="goalBarCount">0 / 5</span>
+    </div>
+    <div class="goal-bar-track"><div class="goal-bar-fill" id="goalBarFill" style="width:0%"></div></div>
+  </div>
+
+  <!-- SOCIAL PROOF TICKER -->
+  <div class="proof-ticker">
+    <div class="proof-dot"></div>
+    <span class="proof-text" id="proofText">Loading community stats…</span>
+  </div>
+
+  <!-- BADGES SHELF -->
+  <div class="badges-shelf" id="badgesShelf"><span class="badges-label">Badges</span></div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-mark"><span class="logo-dot"></span> SwapIt</div>
+    <h1>Same <em>vibe,</em><br>half the footprint.</h1>
+    <p class="tagline">Photo in → greener swap out</p>
+  </header>
+
+  <!-- UPLOAD -->
+  <div id="S_upload" class="upload-zone">
+    <div class="upload-icon">🛍️</div>
+    <p class="upload-title">Drop your product photo here</p>
+    <p class="upload-sub">Clothing, food, gadgets, home goods —<br>we'll find you a swap that slaps just as hard.</p>
+    <div class="upload-actions">
+      <button class="upload-btn" id="chooseBtn">📁 Choose File</button>
+      <button class="upload-btn secondary" id="cameraBtn">📷 Use Camera</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <!-- PREVIEW -->
+  <div id="S_preview" style="display:none">
+    <div class="preview-card">
+      <div class="preview-img-wrap">
+        <img id="previewImg" src="" alt="Your product">
+        <span class="preview-label">📸 Your item</span>
+        <button id="removeBtn" class="remove-img-btn" type="button">✕</button>
+      </div>
+      <button class="analyze-btn" id="analyzeBtn" type="button">
+        <span>✦</span> Find my green swap
+      </button>
+    </div>
+    <div class="error-card" id="errorCard"></div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="S_loading" style="display:none" class="loading-state">
+    <div class="spinner-wrap"><div class="spinner"></div><span class="spinner-leaf">🌿</span></div>
+    <p class="loading-text">Sniffing out the greener path…</p>
+    <p class="loading-sub">Analysing material, origin & carbon footprint</p>
+  </div>
+
+  <!-- RESULT -->
+  <div id="S_result" style="display:none">
+    <!-- memory chip injected here -->
+    <div id="memoryChipWrap"></div>
+    <div class="impact-card">
+      <div class="impact-score-wrap">
+        <div class="impact-score" id="impactScore">—</div>
+        <div class="impact-score-label">Eco Grade</div>
+      </div>
+      <div class="impact-info">
+        <h2 class="item-name" id="itemName">—</h2>
+        <div class="impact-tags" id="impactTags"></div>
+        <p class="impact-why" id="impactWhy"></p>
+        <div id="ptsFlash"></div>
+      </div>
+    </div>
+    <!-- scale card injected here -->
+    <div id="scaleCardWrap"></div>
+    <div class="swap-divider">✦ greener swaps ✦</div>
+    <div id="swapsGrid"></div>
+    <div class="action-bar">
+      <button class="btn-reset" id="resetBtn" type="button">↩ Scan another item</button>
+    </div>
+  </div>
+
+  <p class="footer-note">Powered by Claude Vision · Stats saved locally · 🌍 every swap counts</p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const STOR_KEY = 'swapit_v4';
+function loadState() { try { return JSON.parse(localStorage.getItem(STOR_KEY))||{}; } catch { return {}; } }
+function defaults(s) {
+  s.points      = s.points      ?? 0;
+  s.scans       = s.scans       ?? 0;
+  s.swaps       = s.swaps       ?? 0;
+  s.co2         = s.co2         ?? 0;
+  s.badges      = s.badges      ?? [];
+  s.cats        = s.cats        ?? {};
+  s.goal        = s.goal        ?? null;
+  s.goalSet     = s.goalSet     ?? false;
+  s.swapMemory  = s.swapMemory  ?? {};   // { category: { name, searchQuery, platform } }
+  return s;
+}
+let G = defaults(loadState());
+function save() { try { localStorage.setItem(STOR_KEY, JSON.stringify(G)); } catch {} }
+
+// ═══════════════════════════════════════════════════════
+// BADGES
+// ═══════════════════════════════════════════════════════
+const BADGES = [
+  { id:'scan1',   e:'🔍', n:'First Scan',     t:'Scanned your first item',       c:g=>g.scans>=1 },
+  { id:'scan5',   e:'📸', n:'Serial Scanner', t:'Scanned 5 items',               c:g=>g.scans>=5 },
+  { id:'swap1',   e:'🤝', n:'First Swap',     t:'Committed to your first swap',  c:g=>g.swaps>=1 },
+  { id:'swap5',   e:'🌿', n:'Swap Streak',    t:'Taken 5 swaps',                 c:g=>g.swaps>=5 },
+  { id:'co2_1',   e:'🌍', n:'Carbon Cutter',  t:'Saved 1kg of CO₂',              c:g=>g.co2>=1 },
+  { id:'co2_10',  e:'🌳', n:'Tree Planter',   t:'Saved 10kg of CO₂',             c:g=>g.co2>=10 },
+  { id:'fashion', e:'👗', n:'Fashion Rebel',  t:'Scanned a fashion item',         c:g=>(g.cats.fashion||0)>=1 },
+  { id:'food',    e:'🥦', n:'Eco Foodie',     t:'Scanned a food item',            c:g=>(g.cats.food||0)>=1 },
+  { id:'pts100',  e:'⚡', n:'Power User',     t:'Earned 100 eco points',          c:g=>g.points>=100 },
+  { id:'cam1',    e:'📷', n:'Camera Hero',    t:'Used live camera to scan',       c:g=>(g.cats.camera||0)>=1 },
+  { id:'goal1',   e:'🎯', n:'Goal Getter',    t:'Completed your first swap goal', c:g=>g.goal&&g.swaps>=g.goal },
+];
+function checkBadges() {
+  const fresh=[];
+  BADGES.forEach(b=>{ if(!G.badges.includes(b.id)&&b.c(G)){G.badges.push(b.id);fresh.push(b);} });
+  return fresh;
+}
+function getLevel(p) {
+  if(p>=500) return '🌲 Forest Guardian';
+  if(p>=200) return '🌳 Tree Hugger';
+  if(p>=100) return '🌱 Eco Warrior';
+  if(p>=40)  return '🍃 Green Thinker';
+  return '🌱 Sprout';
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER UI
+// ═══════════════════════════════════════════════════════
+function renderUI() {
+  document.getElementById('sPoints').textContent = G.points;
+  document.getElementById('sScans').textContent  = G.scans;
+  document.getElementById('sSwaps').textContent  = G.swaps;
+  document.getElementById('sCo2').textContent    = G.co2.toFixed(1)+'kg';
+  document.getElementById('levelPill').textContent = getLevel(G.points);
+  // badges
+  const shelf = document.getElementById('badgesShelf');
+  shelf.innerHTML = '<span class="badges-label">Badges</span>';
+  BADGES.forEach(b=>{
+    const s=document.createElement('span');
+    s.className='badge-chip'+(G.badges.includes(b.id)?'':' locked');
+    s.textContent=b.e; s.setAttribute('data-tip',b.n+': '+b.t);
+    shelf.appendChild(s);
+  });
+  // goal bar
+  const gbw = document.getElementById('goalBarWrap');
+  if(G.goal) {
+    gbw.style.display='block';
+    const pct = Math.min(100, Math.round((G.swaps/G.goal)*100));
+    document.getElementById('goalBarCount').textContent = G.swaps+' / '+G.goal;
+    document.getElementById('goalBarFill').style.width  = pct+'%';
+  } else { gbw.style.display='none'; }
+}
+
+// ═══════════════════════════════════════════════════════
+// SOCIAL PROOF TICKER
+// ═══════════════════════════════════════════════════════
+const PROOF_TEMPLATES = [
+  (n,c)=>`<strong>${n.toLocaleString()}</strong> people swapped <em>${c}</em> items this week 🌿`,
+  (n)=>`<strong>${n.toLocaleString()}</strong> eco swaps made across India today`,
+  (n,c)=>`<strong>${n.toLocaleString()}</strong> ${c} swappers saved ~${(n*1.4).toFixed(0)}kg CO₂ this month`,
+  (n)=>`Join <strong>${n.toLocaleString()}</strong> SwapIt users making greener choices`,
+];
+const PROOF_CATS = { fashion:'fashion', food:'food', electronics:'electronics', home:'home', beauty:'beauty', other:'everyday' };
+let proofBase = 800 + Math.floor(Math.random()*400);
+let proofInterval = null;
+
+function updateTicker(category) {
+  const cat = PROOF_CATS[category] || 'everyday';
+  proofBase += Math.floor(Math.random()*3);
+  const tmpl = PROOF_TEMPLATES[Math.floor(Math.random()*PROOF_TEMPLATES.length)];
+  document.getElementById('proofText').innerHTML = tmpl(proofBase, cat);
+}
+
+function startTicker(category) {
+  updateTicker(category||'other');
+  if(proofInterval) clearInterval(proofInterval);
+  proofInterval = setInterval(()=>updateTicker(category||'other'), 4000);
+}
+
+// ═══════════════════════════════════════════════════════
+// ONBOARDING MODAL
+// ═══════════════════════════════════════════════════════
+let selectedGoal = 5;
+
+document.querySelectorAll('.goal-opt').forEach(opt=>{
+  opt.addEventListener('click', function(){
+    document.querySelectorAll('.goal-opt').forEach(o=>o.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedGoal = parseInt(this.dataset.val);
+  });
+});
+
+document.getElementById('goalConfirm').addEventListener('click', ()=>{
+  G.goal=selectedGoal; G.goalSet=true; save(); renderUI();
+  document.getElementById('onboardingModal').style.display='none';
+});
+document.getElementById('goalSkip').addEventListener('click', ()=>{
+  G.goalSet=true; save();
+  document.getElementById('onboardingModal').style.display='none';
+});
+
+function maybeShowOnboarding() {
+  if(!G.goalSet) document.getElementById('onboardingModal').style.display='flex';
+}
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.innerHTML=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════════════
+const confCanvas=document.getElementById('confettiCanvas');
+const confCtx=confCanvas.getContext('2d');
+let confPieces=[],confAnim=null;
+function launchConfetti() {
+  confCanvas.width=window.innerWidth; confCanvas.height=window.innerHeight;
+  const COLS=['#C5D9B0','#4A6741','#8FAF7E','#F9CA24','#fff','#1C3829','#E8DCC8'];
+  confPieces=Array.from({length:130},()=>({
+    x:Math.random()*confCanvas.width, y:Math.random()*-confCanvas.height*.5,
+    w:6+Math.random()*8, h:10+Math.random()*8,
+    color:COLS[Math.floor(Math.random()*COLS.length)],
+    rot:Math.random()*360, vx:(Math.random()-.5)*3,
+    vy:2+Math.random()*4, vr:(Math.random()-.5)*6, opacity:1
+  }));
+  if(confAnim) cancelAnimationFrame(confAnim);
+  animConf(); setTimeout(()=>confPieces.forEach(p=>p.vy+=.5),2500);
+}
+function animConf(){
+  confCtx.clearRect(0,0,confCanvas.width,confCanvas.height);
+  confPieces.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+    if(p.y>confCanvas.height*.75) p.opacity-=.04;
+    confCtx.save();
+    confCtx.globalAlpha=Math.max(0,p.opacity);
+    confCtx.translate(p.x,p.y); confCtx.rotate(p.rot*Math.PI/180);
+    confCtx.fillStyle=p.color; confCtx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    confCtx.restore();
+  });
+  confPieces=confPieces.filter(p=>p.opacity>0);
+  if(confPieces.length>0) confAnim=requestAnimationFrame(animConf);
+  else confCtx.clearRect(0,0,confCanvas.width,confCanvas.height);
+}
+
+// ═══════════════════════════════════════════════════════
+// SHARE CARD (Canvas)
+// ═══════════════════════════════════════════════════════
+let shareCardData = null;
+
+function buildShareCard(itemName, swapName, co2Saved) {
+  const canvas = document.getElementById('shareCardCanvas');
+  const ctx = canvas.getContext('2d');
+  const W=320, H=480;
+  canvas.width=W; canvas.height=H;
+
+  // background gradient
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#1C3829');
+  grad.addColorStop(1,'#2D5240');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+  // decorative circles
+  ctx.beginPath(); ctx.arc(W+40,60,120,0,Math.PI*2);
+  ctx.fillStyle='rgba(143,175,126,.07)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(-40,H-60,100,0,Math.PI*2);
+  ctx.fillStyle='rgba(143,175,126,.05)'; ctx.fill();
+
+  // logo
+  ctx.fillStyle='rgba(197,217,176,.15)';
+  roundRect(ctx,24,24,80,28,14); ctx.fill();
+  ctx.fillStyle='#C5D9B0';
+  ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText('● SWAPIT',34,43);
+
+  // headline
+  ctx.fillStyle='rgba(197,217,176,.5)';
+  ctx.font='12px monospace'; ctx.textAlign='center';
+  ctx.fillText('I JUST MADE A GREEN SWAP', W/2, 90);
+
+  // item -> swap
+  ctx.fillStyle='#C5D9B0'; ctx.font='italic bold 15px serif';
+  wrapText(ctx, itemName, W/2, 118, W-60, 22);
+
+  ctx.fillStyle='#8FAF7E'; ctx.font='28px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('↓', W/2, 160);
+
+  ctx.fillStyle='#ffffff'; ctx.font='bold italic 19px serif';
+  wrapText(ctx, swapName, W/2, 192, W-48, 26);
+
+  // CO2 pill
+  ctx.fillStyle='rgba(197,217,176,.12)';
+  roundRect(ctx,W/2-90,220,180,56,16); ctx.fill();
+  ctx.fillStyle='#8FAF7E'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText('CO₂ SAVED', W/2, 244);
+  ctx.fillStyle='#C5D9B0'; ctx.font='bold 28px serif';
+  ctx.fillText(co2Saved.toFixed(1)+'kg', W/2, 272);
+
+  // India scale
+  const indiaSwappers = Math.round(co2Saved * 14000000 / 1000);
+  ctx.fillStyle='rgba(255,255,255,.06)';
+  roundRect(ctx,24,300,W-48,72,14); ctx.fill();
+  ctx.fillStyle='rgba(197,217,176,.6)'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText('IF 1% OF INDIA MADE THIS SWAP', W/2, 322);
+  ctx.fillStyle='#fff'; ctx.font='bold 13px serif';
+  ctx.fillText('~'+formatBig(indiaSwappers)+' tonnes CO₂ saved/year', W/2, 344);
+  ctx.fillStyle='rgba(197,217,176,.4)'; ctx.font='10px sans-serif';
+  ctx.fillText('That\'s '+Math.round(indiaSwappers/0.6).toLocaleString()+' trees planted 🌳', W/2, 364);
+
+  // footer
+  ctx.fillStyle='rgba(197,217,176,.3)';
+  ctx.beginPath(); ctx.moveTo(40,400); ctx.lineTo(W-40,400); ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='rgba(197,217,176,.4)'; ctx.font='10px monospace'; ctx.textAlign='center';
+  ctx.fillText('swapit.app · same vibe, half the footprint', W/2, 422);
+
+  // earth emoji
+  ctx.font='36px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('🌍', W/2, 465);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+}
+
+function wrapText(ctx,text,x,y,maxW,lineH){
+  const words=text.split(' '); let line='';
+  words.forEach((w,i)=>{
+    const test=line+w+' ';
+    if(ctx.measureText(test).width>maxW&&i>0){ ctx.fillText(line,x,y); line=w+' '; y+=lineH; }
+    else line=test;
+  });
+  ctx.fillText(line,x,y);
+}
+
+function formatBig(n){
+  if(n>=10000000) return (n/10000000).toFixed(1)+' Cr';
+  if(n>=100000)   return (n/100000).toFixed(1)+' L';
+  if(n>=1000)     return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+// ═══════════════════════════════════════════════════════
+// SCREENS
+// ═══════════════════════════════════════════════════════
+const SCREENS=['S_upload','S_preview','S_loading','S_result'];
+function show(id){SCREENS.forEach(s=>document.getElementById(s).style.display=(s===id)?'block':'none');}
+
+// ═══════════════════════════════════════════════════════
+// FILE & IMAGE HANDLING
+// ═══════════════════════════════════════════════════════
+let b64=null,mime=null;
+const fileInput=document.getElementById('fileInput');
+const previewImg=document.getElementById('previewImg');
+const errorCard=document.getElementById('errorCard');
+
+function setImage(dataUrl,mimeType){
+  b64=dataUrl.split(',')[1]; mime=mimeType;
+  previewImg.src=dataUrl; errorCard.style.display='none'; show('S_preview');
+}
+function goHome(){
+  b64=null;mime=null;fileInput.value='';previewImg.src='';
+  errorCard.style.display='none';show('S_upload');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.getElementById('chooseBtn').addEventListener('click',e=>{e.stopPropagation();fileInput.click();});
+document.getElementById('S_upload').addEventListener('click',e=>{
+  if(!['chooseBtn','cameraBtn'].includes(e.target.id)&&!e.target.classList.contains('upload-btn'))
+    fileInput.click();
+});
+document.getElementById('S_upload').addEventListener('dragover',e=>{e.preventDefault();document.getElementById('S_upload').classList.add('dragover');});
+document.getElementById('S_upload').addEventListener('dragleave',()=>document.getElementById('S_upload').classList.remove('dragover'));
+document.getElementById('S_upload').addEventListener('drop',e=>{
+  e.preventDefault();document.getElementById('S_upload').classList.remove('dragover');
+  const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))readFile(f);
+});
+fileInput.addEventListener('change',e=>{if(e.target.files[0])readFile(e.target.files[0]);});
+function readFile(file){const r=new FileReader();r.onload=ev=>setImage(ev.target.result,file.type);r.readAsDataURL(file);}
+document.getElementById('removeBtn').addEventListener('click',e=>{e.preventDefault();e.stopPropagation();goHome();});
+document.getElementById('resetBtn').addEventListener('click',goHome);
+
+// ═══════════════════════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════════════════════
+let camStream=null;
+const camOverlay=document.getElementById('camOverlay');
+const camCanvas=document.getElementById('camCanvas');
+
+async function openCamera(){
+  camOverlay.style.display='flex';
+  document.getElementById('camBody').innerHTML='<div style="padding:24px;text-align:center;color:var(--sage);font-size:13px;">Starting camera…</div>';
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('camBody').innerHTML=`
+      <video id="camVideo" autoplay playsinline muted style="width:100%;display:block;background:#000;max-height:320px;object-fit:cover;"></video>
+      <div class="cam-foot">
+        <button class="cam-snap" id="camSnap">⬤ Capture</button>
+        <button class="cam-cancel-btn" id="camCancel">Cancel</button>
+      </div>`;
+    document.getElementById('camVideo').srcObject=camStream;
+    document.getElementById('camSnap').addEventListener('click',snapPhoto);
+    document.getElementById('camCancel').addEventListener('click',closeCamera);
+  }catch(err){
+    document.getElementById('camBody').innerHTML=`<div class="cam-err">📷 Camera access denied.<br><small>${err.message}</small><br><br><button class="cam-cancel-btn" onclick="document.getElementById('camOverlay').style.display='none'">Close</button></div>`;
+  }
+}
+function snapPhoto(){
+  const v=document.getElementById('camVideo');
+  camCanvas.width=v.videoWidth||640; camCanvas.height=v.videoHeight||480;
+  camCanvas.getContext('2d').drawImage(v,0,0);
+  const dataUrl=camCanvas.toDataURL('image/jpeg',.92);
+  closeCamera(); G.cats.camera=(G.cats.camera||0)+1; save();
+  setImage(dataUrl,'image/jpeg');
+}
+function closeCamera(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  camOverlay.style.display='none';
+}
+document.getElementById('cameraBtn').addEventListener('click',e=>{e.stopPropagation();openCamera();});
+document.getElementById('camClose').addEventListener('click',closeCamera);
+
+// ═══════════════════════════════════════════════════════
+// SHARE MODAL
+// ═══════════════════════════════════════════════════════
+document.getElementById('shareClose').addEventListener('click',()=>document.getElementById('shareModal').style.display='none');
+document.getElementById('shareDownload').addEventListener('click',()=>{
+  const canvas = document.getElementById('shareCardCanvas');
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'swapit-share.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, 'image/png');
+});
+
+function showShareModal(itemName,swapName,co2){
+  buildShareCard(itemName,swapName,co2);
+  document.getElementById('shareModal').style.display='flex';
+}
+
+// ═══════════════════════════════════════════════════════
+// ANALYSE
+// ═══════════════════════════════════════════════════════
+document.getElementById('analyzeBtn').addEventListener('click',async()=>{
+  if(!b64)return;
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; errorCard.style.display='none'; show('S_loading');
+
+  const prompt=`You are an environmental impact analyst for SwapIt, a sustainable shopping app.
+Analyze the product in this image and return ONLY valid JSON — no markdown, no backticks, no extra text.
+{
+  "item_name":"Short product name",
+  "category":"fashion|food|electronics|home|beauty|other",
+  "eco_impact_level":"high|medium|low",
+  "eco_score":"D|C|B|A|A+",
+  "impact_tags":["2-4 short labels"],
+  "impact_explanation":"2-3 sentences about environmental harm.",
+  "price_original_inr":"e.g. ₹800–₹1200",
+  "co2_kg":2.5,
+  "swaps":[
+    {
+      "name":"Greener swap name",
+      "swap_type":"e.g. Organic/Second-hand/Zero-waste",
+      "why":"2-3 sentences: why greener AND same vibe",
+      "benefits":["Benefit 1","Benefit 2","Benefit 3"],
+      "price_swap_inr":"e.g. ₹900–₹1400",
+      "price_delta":"cheaper|similar|pricier",
+      "co2_saved_kg":1.8,
+      "where_to_find":["Amazon","Flipkart"]
+    },
+    {
+      "name":"Second swap",
+      "swap_type":"Label",
+      "why":"2-3 sentences",
+      "benefits":["Benefit 1","Benefit 2"],
+      "price_swap_inr":"e.g. ₹500–₹700",
+      "price_delta":"cheaper|similar|pricier",
+      "co2_saved_kg":0.9,
+      "where_to_find":["Meesho"]
+    }
+  ]
+}
+Return ONLY the JSON.`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1200,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+          {type:'text',text:prompt}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.map(x=>x.text||'').join('');
+    renderResult(JSON.parse(raw.replace(/```json|```/g,'').trim()));
+  }catch(err){
+    show('S_preview'); errorCard.style.display='block';
+    errorCard.textContent='⚠️ '+(err.message||'Could not analyse image. Please try again.');
+  }finally{btn.disabled=false;}
+});
+
+// ═══════════════════════════════════════════════════════
+// RENDER RESULT
+// ═══════════════════════════════════════════════════════
+function renderResult(r) {
+  // ── eco score ──
+  const sc=document.getElementById('impactScore');
+  sc.textContent=r.eco_score||'?';
+  sc.className='impact-score '+(r.eco_impact_level||'medium');
+  document.getElementById('itemName').textContent=r.item_name||'Your item';
+  document.getElementById('impactWhy').textContent=r.impact_explanation||'';
+
+  // ── tags ──
+  const tagsEl=document.getElementById('impactTags'); tagsEl.innerHTML='';
+  const cls=r.eco_impact_level==='high'?'red':r.eco_impact_level==='medium'?'yellow':'green';
+  (r.impact_tags||[]).forEach(t=>{
+    const s=document.createElement('span');s.className='tag-pill '+cls;s.textContent=t;tagsEl.appendChild(s);
+  });
+
+  // ── points ──
+  const ptMap={high:30,medium:15,low:5};
+  const pts=ptMap[r.eco_impact_level]||10;
+  G.points+=pts; G.scans+=1;
+  if(r.category)G.cats[r.category]=(G.cats[r.category]||0)+1;
+  save();
+  const nb1=checkBadges();save();
+  nb1.forEach((b,i)=>setTimeout(()=>showToast(b.e+' <strong>Badge Unlocked:</strong> '+b.n),i*800));
+  renderUI();
+  document.getElementById('ptsFlash').innerHTML=`<div class="points-flash">+${pts} pts ⚡ scan logged</div>`;
+
+  // ── social proof ticker ──
+  startTicker(r.category);
+
+  // ── swap memory chip ──
+  const memWrap=document.getElementById('memoryChipWrap'); memWrap.innerHTML='';
+  const mem=G.swapMemory[r.category];
+  if(mem){
+    const q=encodeURIComponent(mem.name);
+    const shopUrl=`https://www.google.com/search?q=${q}+sustainable&tbm=shop`;
+    memWrap.innerHTML=`
+      <div class="memory-chip">
+        <span class="memory-icon">💡</span>
+        <div class="memory-info">
+          <p class="memory-label">You loved this last time</p>
+          <p class="memory-text">${mem.name}</p>
+        </div>
+        <a class="memory-link" href="${shopUrl}" target="_blank" rel="noopener">Shop again →</a>
+      </div>`;
+  }
+
+  // ── scale card ──
+  const co2Item = r.co2_kg || 2;
+  const indiaPct = 14000000; // 1% of India
+  const scaleWrap=document.getElementById('scaleCardWrap');
+  (r.swaps||[]).forEach(sw=>{
+    const totalSaved=(sw.co2_saved_kg||1)*indiaPct;
+    scaleWrap.innerHTML=`
+      <div class="scale-card">
+        <span class="scale-globe">🌏</span>
+        <div class="scale-info">
+          <p class="scale-label">If 1% of India made this swap</p>
+          <p class="scale-text">We'd save <strong>~${formatBig(Math.round(totalSaved/1000))} tonnes</strong> of CO₂ a year — equal to planting <strong>${formatBig(Math.round(totalSaved/1000/0.6))} trees 🌳</strong></p>
+        </div>
+      </div>`;
+    return; // only show for first swap
+  });
+
+  // ── swap cards ──
+  const grid=document.getElementById('swapsGrid'); grid.innerHTML='';
+  (r.swaps||[]).forEach((sw,i)=>{
+    const card=document.createElement('div'); card.className='swap-card';
+    const benefits=(sw.benefits||[]).map(b=>`<span class="benefit-pill">✓ ${b}</span>`).join('');
+    const priceHTML=(r.price_original_inr&&sw.price_swap_inr)?`
+      <div class="price-row">
+        <span class="price-original">${r.price_original_inr}</span>
+        <span class="price-arrow">→</span>
+        <span class="price-swap">${sw.price_swap_inr}</span>
+        <span class="price-delta ${sw.price_delta||'similar'}">${
+          sw.price_delta==='cheaper'?'💚 Cheaper':sw.price_delta==='pricier'?'⬆ Pricier':'≈ Similar'}</span>
+      </div>`:'';
+    const gq=encodeURIComponent(sw.name+' sustainable eco-friendly');
+    const links=(sw.where_to_find||[]).map(p=>{
+      const q=encodeURIComponent(sw.name),pl=p.toLowerCase();
+      const u=pl.includes('amazon')?`https://www.amazon.in/s?k=${q}`
+             :pl.includes('flipkart')?`https://www.flipkart.com/search?q=${q}`
+             :pl.includes('myntra')?`https://www.myntra.com/${q}`
+             :pl.includes('nykaa')?`https://www.nykaa.com/search/result/?q=${q}`
+             :pl.includes('meesho')?`https://www.meesho.com/search?q=${q}`
+             :`https://www.google.com/search?q=${encodeURIComponent(sw.name+' '+p)}`;
+      return `<a class="find-link" href="${u}" target="_blank" rel="noopener">🔗 ${p}</a>`;
+    }).join('');
+
+    card.innerHTML=`
+      <span class="swap-rank">${i+1}</span>
+      <h3 class="swap-name">${sw.name||''}</h3>
+      <p class="swap-type">${sw.swap_type||''}</p>
+      <p class="swap-why">${sw.why||''}</p>
+      ${priceHTML}
+      <div class="swap-benefits">${benefits}</div>
+      <div class="find-section">
+        <p class="find-label">Where to find</p>
+        <div class="find-links">${links}
+          <a class="google-btn" href="https://www.google.com/search?q=${gq}&tbm=shop" target="_blank" rel="noopener">🛒 Google Shopping</a>
+        </div>
+      </div>
+      <div class="decision-wrap">
+        <p class="decision-label">Will you take this swap?</p>
+        <div class="decision-btns">
+          <button class="dec-btn yes"   data-i="${i}" data-c="yes"   data-co2="${sw.co2_saved_kg||0}" data-name="${(sw.name||'').replace(/"/g,'')}" data-cat="${r.category||'other'}" data-item="${(r.item_name||'').replace(/"/g,'')}" type="button">✅ Yes!</button>
+          <button class="dec-btn maybe" data-i="${i}" data-c="maybe" type="button">🤔 Maybe</button>
+          <button class="dec-btn no"    data-i="${i}" data-c="no"    type="button">❌ Not now</button>
+        </div>
+        <p class="dec-feedback" id="fb${i}"></p>
+        <button class="share-trigger" id="share${i}" type="button">📤 Share my green swap</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // ── decision listeners ──
+  grid.querySelectorAll('.dec-btn').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      const idx=this.dataset.i, cho=this.dataset.c;
+      const co2=parseFloat(this.dataset.co2||0);
+      const swName=this.dataset.name, catName=this.dataset.cat, itemName=this.dataset.item;
+      grid.querySelectorAll(`.dec-btn[data-i="${idx}"]`).forEach(b=>{b.disabled=true;b.classList.remove('active');});
+      this.classList.add('active');
+      const fb=document.getElementById('fb'+idx);
+      const shareBtn=document.getElementById('share'+idx);
+
+      if(cho==='yes'){
+        G.swaps+=1; G.co2=parseFloat((G.co2+co2).toFixed(2)); G.points+=20;
+        // save swap memory
+        G.swapMemory[catName]={name:swName,co2};
+        save();
+        const nb=checkBadges();save();
+        nb.forEach((b,i)=>setTimeout(()=>showToast(b.e+' <strong>Badge Unlocked:</strong> '+b.n),i*700));
+        renderUI();
+        launchConfetti();
+        fb.textContent=`🎉 +20 pts & ${co2}kg CO₂ saved logged!`;
+        if(shareBtn){shareBtn.classList.add('visible');shareCardData={itemName,swapName:swName,co2};}
+      } else if(cho==='maybe'){
+        fb.textContent='🤔 Bookmarked for next time!';
+      } else {
+        fb.textContent='👍 Got it. Every scan still helps!';
+      }
+    });
+  });
+
+  // ── share button listeners ──
+  grid.querySelectorAll('.share-trigger').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      if(shareCardData) showShareModal(shareCardData.itemName,shareCardData.swapName,shareCardData.co2);
+    });
+  });
+
+  show('S_result');
+  document.getElementById('S_result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+renderUI();
+show('S_upload');
+startTicker('other');
+maybeShowOnboarding();
+</script>
+</body>
+</html>
